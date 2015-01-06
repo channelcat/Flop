@@ -7,7 +7,8 @@ var angularDrag = 5.0;
 var attachToCenterOfMass = false;
  
  
-private var springJoint : SpringJoint2D;
+//private var springJoint : SpringJoint2D;
+private var springJoint : HingeJoint2D;
  
 function Update ()
 {
@@ -23,9 +24,9 @@ function Update ()
     // I therefore set any 'touchable' object to layer 8 and use the layerMask above for all touchable items
    
     if (hit.collider != null && hit.rigidbody.isKinematic==true)
-        {
-            return;
-        }
+	{
+	    return;
+	}
        
     if (hit.collider != null && hit.rigidbody.isKinematic==false) {
        
@@ -34,7 +35,7 @@ function Update ()
         {
             var go = new GameObject("Rigidbody2D Dragger");
             var body : Rigidbody2D = go.AddComponent ("Rigidbody2D") as Rigidbody2D;
-            springJoint = go.AddComponent ("SpringJoint2D");
+            springJoint = go.AddComponent ("HingeJoint2D");
            
             body.isKinematic = true;
         }
@@ -56,8 +57,8 @@ function Update ()
            
         }
        
-        springJoint.distance = distance; // there is no distance in SpringJoint2D
-        springJoint.dampingRatio = damper;// there is no damper in SpringJoint2D but there is a dampingRatio
+        //springJoint.distance = distance; // there is no distance in SpringJoint2D
+        //springJoint.dampingRatio = damper;// there is no damper in SpringJoint2D but there is a dampingRatio
         //springJoint.maxDistance = distance;  // there is no MaxDistance in the SpringJoint2D - but there is a 'distance' field
                                             //  see http://docs.unity3d.com/Documentation/ScriptReference/SpringJoint2D.html
         //springJoint.maxDistance = distance;
