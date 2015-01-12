@@ -4,13 +4,15 @@ using System.Collections.Generic;
 
 public class DragAndDropExact : MonoBehaviour {
 	private Vector3 screenPoint;
-	private bool dragging = false;
 	private int LAYER = 30; // Use layer 30 to test collision with
-	private int LAYER_MASK = 1 << 30; // Use layer 30 to test collision with
-
-	public Rigidbody2D draggableRigidBody;
-	[Tooltip("The collider must be a circle with a trigger")]
-	public CircleCollider2D dragCollider;
+    private int LAYER_MASK = 1 << 30; // Use layer 30 to test collision with
+    private Rigidbody2D[] effectedRigidbodies;
+    
+    public Rigidbody2D draggableRigidBody;
+    [Tooltip("The collider must be a circle with a trigger")]
+    public CircleCollider2D dragCollider;
+    public double throwDamping = 0.8;
+    public double throwMaximumSpeed = 30.0;
 
 	void Start() {
 		// Can you tell the real circlecollider difference?  It's a trigger :)
@@ -22,7 +24,7 @@ public class DragAndDropExact : MonoBehaviour {
 			}
 		}
 
-		// Create a new collider in its own layer attached to the game object
+		// Create a new collider in its own layer attached to the draggable rigid body
 		GameObject colliderHolder = new GameObject("Drag Collider");
 		colliderHolder.transform.parent = dragCollider.gameObject.transform;
         colliderHolder.transform.localPosition = new Vector3 (0,0,0);
@@ -33,6 +35,9 @@ public class DragAndDropExact : MonoBehaviour {
         newCollider.isTrigger = true;
 		Destroy (dragCollider);
         dragCollider = newCollider;
+
+        // Find all rigid bodies so we can throw them
+        effectedRigidbodies = gameObject.GetComponentsInChildren<Rigidbody2D>();
 	}
 
 
@@ -41,7 +46,7 @@ public class DragAndDropExact : MonoBehaviour {
 			//offset = gameObject.transform.position - Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, screenPoint.z));
             Vector3 mousePoint = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, 0));
             RaycastHit2D hit = Physics2D.Raycast (mousePoint, Vector2.zero, Mathf.Infinity, LAYER_MASK);
-            Debug.Log (hit.collider);
+
             if (hit.collider) {
                 Vector3 offset = gameObject.transform.position - mousePoint;
                 StartCoroutine ("DragObject", offset);
@@ -81,7 +86,21 @@ public class DragAndDropExact : MonoBehaviour {
         if (velocitySamples != 0)
             velocityVector /= velocitySamples;
 
-        draggableRigidBody.velocity = velocityVector * 3;
+        // Dampen the throw so it won't feel strange
+        velocityVector *= (float)throwDamping;
+
+        // Ensure we're not throwing the ragdoll too fast
+        double distance = Vector3.Distance(new Vector3(), velocityVector);
+        if (distance > throwMaximumSpeed)
+            velocityVector = velocityVector.normalized * (float)throwMaximumSpeed;
+
+        Debug.Log (distance);
+
+        foreach (Rigidbody2D body in effectedRigidbodies) {
+            body.velocity = velocityVector;
+        }
+
+        //draggableRigidBody.velocity = velocityVector * 3;
         draggableRigidBody.isKinematic = false;
 	}
 }
