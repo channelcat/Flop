@@ -14,6 +14,6 @@ public class RestartLevel : MonoBehaviour {
 	}
 
 	void OnMouseDown () {
-				Application.LoadLevel (Application.loadedLevelName);
+		Application.LoadLevel (Application.loadedLevelName);
 	}
 }
