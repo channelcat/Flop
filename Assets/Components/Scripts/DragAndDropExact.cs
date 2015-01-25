@@ -4,8 +4,9 @@ using System.Collections.Generic;
 
 public class DragAndDropExact : MonoBehaviour {
 	private Vector3 screenPoint;
-	private int LAYER = 30; // Use layer 30 to test collision with
-    private int LAYER_MASK = 1 << 30; // Use layer 30 to test collision with
+    private int LAYER = 30; // Use layer 30 to test collision with
+    private int DRAG_LAYER_MASK = 1 << 11; // Use layer 11 to test drag area collision with
+    private int BODY_LAYER_MASK = 1 << 30; // Use layer 30 to test body collision with
     private Rigidbody2D[] effectedRigidbodies;
     
     public Rigidbody2D draggableRigidBody;
@@ -13,7 +14,6 @@ public class DragAndDropExact : MonoBehaviour {
     public CircleCollider2D dragCollider;
     public double throwDamping = 0.8;
     public double throwMaximumSpeed = 30.0;
-    public GameObject theObject;
 
 	void Start() {
 		// Can you tell the real circlecollider difference?  It's a trigger :)
@@ -46,12 +46,15 @@ public class DragAndDropExact : MonoBehaviour {
 		if (Input.GetMouseButtonDown (0)) {
 			//offset = gameObject.transform.position - Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, screenPoint.z));
             Vector3 mousePoint = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, 0));
-            RaycastHit2D hit = Physics2D.Raycast (mousePoint, Vector2.zero, Mathf.Infinity, LAYER_MASK);
+            RaycastHit2D hitBody = Physics2D.Raycast (mousePoint, Vector2.zero, Mathf.Infinity, BODY_LAYER_MASK);
 
-            if (hit.collider) {
-                Vector3 offset = gameObject.transform.position - mousePoint;
-                Messenger.Broadcast<GameObject> ("StartDrag", draggableRigidBody.gameObject );
-                StartCoroutine ("DragObject", offset);
+            if (hitBody.collider) {
+                RaycastHit2D hitDrag = Physics2D.Raycast (mousePoint, Vector2.zero, Mathf.Infinity, DRAG_LAYER_MASK);
+                if (hitDrag.collider) {
+                    Vector3 offset = gameObject.transform.position - mousePoint;
+                    Messenger.Broadcast<GameObject> ("StartDrag", draggableRigidBody.gameObject );
+                    StartCoroutine ("DragObject", offset);
+                }
             }
 		}
 	}
@@ -62,10 +65,18 @@ public class DragAndDropExact : MonoBehaviour {
         int maxTicks = 5;
         TailList<Tuple<float, Vector3>> ticks = new TailList<Tuple<float, Vector3>> (maxTicks);
 
-		while (Input.GetMouseButton(0)) {
+        while (Input.GetMouseButton(0)) {
+            // Calculate the current mouse point
+            Vector3 curScreenPoint = new Vector3(Input.mousePosition.x, Input.mousePosition.y, 0);
+            Vector3 mousePoint = Camera.main.ScreenToWorldPoint(curScreenPoint);
+
+            // If we're not in a drag box anymore, bail!
+            RaycastHit2D hitDrag = Physics2D.Raycast (mousePoint, Vector2.zero, Mathf.Infinity, DRAG_LAYER_MASK);
+            if (!hitDrag.collider)
+                break;
+
             // Move the ragdoll to the mouse location
-			Vector3 curScreenPoint = new Vector3(Input.mousePosition.x, Input.mousePosition.y, 0);
-			Vector3 curPosition = Camera.main.ScreenToWorldPoint(curScreenPoint) + offset;
+            Vector3 curPosition = mousePoint + offset;
 			transform.position = curPosition;
 
             // Store his location

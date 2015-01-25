@@ -43,26 +43,20 @@ public class StickyCamera : MonoBehaviour {
         // Store original camera size
         targetSize = camera.orthographicSize;
 
-        //double cameraSize = 
-        Debug.Log (cameraSize);
-        Debug.Log (cameraHypotenuse);
-        Debug.Log (hypotenuseToCameraSize);
-
         // Get all anchors
         GameObject[] anchorObjects = GameObject.FindGameObjectsWithTag("CameraAnchor");
         int anchorPoint = 0;
         anchorPoints = new Tuple<BoxCollider2D, float>[anchorObjects.Length];
         foreach (GameObject anchor in anchorObjects) {
-            // Get rid of the display
-            SpriteRenderer _sprite = anchor.GetComponent<SpriteRenderer>();
             BoxCollider2D _box = anchor.GetComponent<BoxCollider2D>();
             Vector3 _boxSize = _box.bounds.size;
-            
             float hypotenuse = Mathf.Sqrt(_boxSize.x*_boxSize.x + _boxSize.y*_boxSize.y);
+
             anchorPoints[anchorPoint++] = new Tuple<BoxCollider2D, float>(_box, hypotenuse*hypotenuseToCameraSize);
-            
-            Destroy(_sprite);
         }
+
+        if (!target)
+            Debug.LogError ("Camera target is missing!");
     }
     
     void startDrag (GameObject draggedObject)
@@ -78,6 +72,9 @@ public class StickyCamera : MonoBehaviour {
     // Update is called once per frame
     void Update () 
     {
+        if (!target)
+            return;
+
         if (mode == (int)MODES.FOLLOW) { 
             currentTargetPosition = target.position;
             currentTargetSize = targetSize;
