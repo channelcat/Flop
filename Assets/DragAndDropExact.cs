@@ -13,6 +13,7 @@ public class DragAndDropExact : MonoBehaviour {
     public CircleCollider2D dragCollider;
     public double throwDamping = 0.8;
     public double throwMaximumSpeed = 30.0;
+    public GameObject theObject;
 
 	void Start() {
 		// Can you tell the real circlecollider difference?  It's a trigger :)
@@ -49,6 +50,7 @@ public class DragAndDropExact : MonoBehaviour {
 
             if (hit.collider) {
                 Vector3 offset = gameObject.transform.position - mousePoint;
+                Messenger.Broadcast<GameObject> ("StartDrag", draggableRigidBody.gameObject );
                 StartCoroutine ("DragObject", offset);
             }
 		}
@@ -94,13 +96,12 @@ public class DragAndDropExact : MonoBehaviour {
         if (distance > throwMaximumSpeed)
             velocityVector = velocityVector.normalized * (float)throwMaximumSpeed;
 
-        Debug.Log (distance);
-
         foreach (Rigidbody2D body in effectedRigidbodies) {
             body.velocity = velocityVector;
         }
 
         //draggableRigidBody.velocity = velocityVector * 3;
         draggableRigidBody.isKinematic = false;
+        Messenger.Broadcast<GameObject> ("StopDrag", draggableRigidBody.gameObject );
 	}
 }
