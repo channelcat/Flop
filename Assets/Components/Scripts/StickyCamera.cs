@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections;
 
 public static class BoxCollider2DExtensions
@@ -28,6 +29,8 @@ public class StickyCamera : MonoBehaviour {
     public float dampTime = 0.15f;
     public Transform target;
 
+    int CompareObjectNames( GameObject x, GameObject y ) { return x.name.CompareTo( y.name ); }
+
 	// Use this for initialization
 	void Start () {
         mode = (int)MODES.FOLLOW;
@@ -43,8 +46,11 @@ public class StickyCamera : MonoBehaviour {
         // Store original camera size
         targetSize = camera.orthographicSize;
 
-        // Get all anchors
+        // Get all anchors and sort by name
         GameObject[] anchorObjects = GameObject.FindGameObjectsWithTag("CameraAnchor");
+        Array.Sort( anchorObjects, CompareObjectNames );
+
+        // Build a list of anchor points and camera sizes
         int anchorPoint = 0;
         anchorPoints = new Tuple<BoxCollider2D, float>[anchorObjects.Length];
         foreach (GameObject anchor in anchorObjects) {
